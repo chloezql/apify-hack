@@ -7,18 +7,24 @@ const client = new ApifyClient({
 
 export async function POST(request: Request) {
     try {
-        const { query } = await request.json();
+        const { query, userBackgroundUrl } = await request.json();
 
         if (!query) {
             return NextResponse.json({ error: 'Query is required' }, { status: 400 });
         }
 
-        console.log(`Starting search for: ${query}`);
+        console.log(`Starting search for: ${query}, bg: ${userBackgroundUrl || 'none'}`);
 
         // Start Kura Actor
-        const kuraPromise = client.actor('tropical_lease/kura').start({
+        const kuraInput: any = {
             scenario: query,
-        });
+        };
+        
+        if (userBackgroundUrl) {
+            kuraInput.userBackgroundUrl = userBackgroundUrl;
+        }
+
+        const kuraPromise = client.actor('tropical_lease/kura').start(kuraInput);
 
         // Start Pinterest Scraper
         const pinterestPromise = client.actor('LJ5EVniB0ulV4RfGP').start({

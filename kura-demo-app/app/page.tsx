@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Search, Loader2, Sparkles, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react';
 import { MasonryGrid, Item } from '@/components/MasonryGrid';
 
 export default function Home() {
   const [query, setQuery] = useState('');
+  const [userBackgroundUrl, setUserBackgroundUrl] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,10 @@ export default function Home() {
       const res = await fetch('/api/start-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ 
+            query,
+            userBackgroundUrl: userBackgroundUrl.trim() || undefined
+        }),
       });
 
       if (!res.ok) throw new Error('Failed to start search');
@@ -184,22 +189,62 @@ export default function Home() {
             </p>
         </div>
 
-        <form onSubmit={handleSearch} className="relative w-full shadow-xl rounded-full bg-white group focus-within:ring-4 ring-green-100 transition-all">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g., South Californian backyard sunset..."
-            className="w-full h-14 md:h-16 pl-6 pr-16 rounded-full border-none outline-none text-lg text-gray-800 placeholder-gray-400 bg-transparent"
-            disabled={loading}
-          />
-          <button 
-            type="submit"
-            className="absolute right-2 top-2 h-10 md:h-12 w-10 md:w-12 bg-green-600 hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-            disabled={!query.trim() || loading}
-          >
-            {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <Search className="w-5 h-5" />}
-          </button>
+        <form onSubmit={handleSearch} className="relative w-full max-w-3xl">
+            <div className="relative w-full shadow-xl rounded-full bg-white group focus-within:ring-4 ring-green-100 transition-all overflow-hidden">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="e.g., South Californian backyard sunset..."
+                    className="w-full h-14 md:h-16 pl-6 pr-32 md:pr-40 rounded-full border-none outline-none text-lg text-gray-800 placeholder-gray-400 bg-transparent"
+                    disabled={loading}
+                />
+                
+                <div className="absolute right-2 top-2 bottom-2 flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowUrlInput(!showUrlInput)}
+                        className={`h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center transition-colors ${showUrlInput || userBackgroundUrl ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:bg-gray-100'}`}
+                        title="Add custom background image"
+                    >
+                        <LinkIcon className="w-5 h-5" />
+                    </button>
+                    <button 
+                        type="submit"
+                        className="h-10 md:h-12 w-10 md:w-12 bg-green-600 hover:bg-green-700 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+                        disabled={!query.trim() || loading}
+                    >
+                        {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <Search className="w-5 h-5" />}
+                    </button>
+                </div>
+            </div>
+
+            {/* Optional URL Input */}
+            {(showUrlInput || userBackgroundUrl) && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="relative w-full max-w-2xl mx-auto">
+                        <input
+                            type="url"
+                            value={userBackgroundUrl}
+                            onChange={(e) => setUserBackgroundUrl(e.target.value)}
+                            placeholder="Optional: Paste image URL for your room background..."
+                            className="w-full h-10 pl-4 pr-10 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm bg-white/80 backdrop-blur-sm"
+                        />
+                         {userBackgroundUrl && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setUserBackgroundUrl('');
+                                    setShowUrlInput(false);
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
         </form>
         
         {/* Status Indicators */}
